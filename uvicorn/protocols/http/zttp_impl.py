@@ -180,7 +180,7 @@ class ZttpProtocol(asyncio.Protocol):
                 if self.limit_concurrency is not None and (
                     len(self.connections) >= self.limit_concurrency or len(self.tasks) >= self.limit_concurrency
                 ):
-                    app = service_unavailable
+                    app: ASGI3Application = service_unavailable
                     message = "Exceeded concurrency limit."
                     self.logger.warning(message)
                 else:
@@ -240,7 +240,7 @@ class ZttpProtocol(asyncio.Protocol):
         for name, value in self.headers:
             output += name + b": " + value + b"\r\n"
         output += b"\r\n"
-        protocol = self.ws_protocol_class(  # type: ignore[call-arg, misc]
+        protocol = self.ws_protocol_class(  # type: ignore[misc]
             config=self.config,
             server_state=self.server_state,
             app_state=self.app_state,

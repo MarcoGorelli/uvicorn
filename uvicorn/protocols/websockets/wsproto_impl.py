@@ -6,7 +6,7 @@ import random
 import struct
 from asyncio import TimerHandle
 from io import BytesIO, StringIO
-from typing import Any, Literal, cast
+from typing import Any, Literal
 from urllib.parse import unquote
 
 import wsproto
@@ -16,7 +16,6 @@ from wsproto.extensions import Extension, PerMessageDeflate
 from wsproto.utilities import LocalProtocolError, RemoteProtocolError
 
 from uvicorn._types import (
-    ASGI3Application,
     ASGISendEvent,
     WebSocketEvent,
     WebSocketReceiveEvent,
@@ -77,7 +76,7 @@ class WSProtocol(asyncio.Protocol):
             config.load()  # pragma: full coverage
 
         self.config = config
-        self.app = cast(ASGI3Application, config.loaded_app)
+        self.app = config.loaded_app
         self.loop = _loop or asyncio.get_event_loop()
         self.logger = logging.getLogger("uvicorn.error")
         self.root_path = config.root_path

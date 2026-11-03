@@ -19,7 +19,6 @@ from websockets.legacy.server import HTTPResponse, WebSocketServerProtocol
 from websockets.typing import Subprotocol
 
 from uvicorn._types import (
-    ASGI3Application,
     ASGISendEvent,
     WebSocketConnectEvent,
     WebSocketDisconnectEvent,
@@ -74,7 +73,7 @@ class WebSocketProtocol(WebSocketServerProtocol):
             config.load()
 
         self.config = config
-        self.app = cast(ASGI3Application, config.loaded_app)
+        self.app = config.loaded_app
         self.loop = _loop or asyncio.get_event_loop()
         self.root_path = config.root_path
         self.asgi_version = config.asgi_version

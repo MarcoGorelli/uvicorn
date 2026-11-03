@@ -7,8 +7,8 @@ import sys
 import warnings
 from typing import Any
 
-from gunicorn.arbiter import Arbiter
-from gunicorn.workers.base import Worker
+from gunicorn.arbiter import Arbiter  # pyrefly: ignore[missing-source-for-stubs]
+from gunicorn.workers.base import Worker  # pyrefly: ignore[missing-source-for-stubs]
 
 from uvicorn._compat import asyncio_run
 from uvicorn.config import Config

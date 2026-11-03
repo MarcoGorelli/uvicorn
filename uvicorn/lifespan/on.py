@@ -83,7 +83,9 @@ class LifespanOn:
                 "asgi": {"version": self.config.asgi_version, "spec_version": "2.0"},
                 "state": self.state,
             }
-            await app(scope, self.receive, self.send)
+            # pyrefly: ignore[bad-argument-type]
+            # The lifespan send only accepts lifespan events, which is all a lifespan-scoped app may send.
+            await app(scope, self.receive, self.send)  # type: ignore[arg-type]
         except BaseException as exc:
             self.asgi = None
             self.error_occurred = True

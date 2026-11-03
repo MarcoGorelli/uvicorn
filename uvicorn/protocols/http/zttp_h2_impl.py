@@ -221,7 +221,7 @@ class ZttpH2Protocol(asyncio.Protocol):
         # Refuse new streams once a shutdown began, and handle 503 responses
         # when 'limit_concurrency' is exceeded.
         if self.shutdown_requested:
-            app = service_unavailable
+            app: ASGI3Application = service_unavailable
         elif self.limit_concurrency is not None and (
             len(self.connections) >= self.limit_concurrency or len(self.tasks) >= self.limit_concurrency
         ):

@@ -413,7 +413,7 @@ class WebSocketsSansIOProtocol(asyncio.Protocol):
 
     async def run_asgi(self) -> None:
         try:
-            result = await self.app(self.scope, self.receive, self.send)
+            result = await self.app(self.scope, self.receive, self.send)  # type: ignore[func-returns-value]
         except ClientDisconnected:
             pass  # pragma: full coverage
         except BaseException:

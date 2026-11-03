@@ -304,6 +304,7 @@ class TestBaseReload:
 
             from watchfiles import watch
 
+            # pyrefly: ignore[bad-argument-type]
             assert isinstance(reloader, WatchFilesReload)
             # just so we can make rust_timeout 100ms
             reloader.watcher = watch(
@@ -324,6 +325,7 @@ def test_should_watch_cwd(mocker: MockerFixture, reload_directory_structure: Pat
     mock_watch = mocker.patch("uvicorn.supervisors.watchfilesreload.watch")
 
     config = Config(app="tests.test_config:asgi_app", reload=True, reload_dirs=[])
+    # pyrefly: ignore[not-callable]
     WatchFilesReload(config, target=run, sockets=[])
     mock_watch.assert_called_once()
     assert mock_watch.call_args[0] == (Path.cwd(),)
@@ -339,6 +341,7 @@ def test_should_watch_multiple_dirs(mocker: MockerFixture, reload_directory_stru
         reload=True,
         reload_dirs=[str(app_dir), str(app_first_dir)],
     )
+    # pyrefly: ignore[not-callable]
     WatchFilesReload(config, target=run, sockets=[])
     mock_watch.assert_called_once()
     assert set(mock_watch.call_args[0]) == {

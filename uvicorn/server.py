@@ -122,7 +122,7 @@ class Server:
         def create_protocol(
             _loop: asyncio.AbstractEventLoop | None = None,
         ) -> asyncio.Protocol:
-            return config.http_protocol_class(  # type: ignore[call-arg]
+            return config.http_protocol_class(
                 config=config,
                 server_state=self.server_state,
                 app_state=self.lifespan.state,
@@ -137,8 +137,8 @@ class Server:
             # We use this when the server is run from a Gunicorn worker.
 
             def _share_socket(
-                sock: socket.SocketType,
-            ) -> socket.SocketType:  # pragma py-not-win32
+                sock: socket.socket,
+            ) -> socket.socket:  # pragma py-not-win32
                 # Windows requires the socket be explicitly shared across
                 # multiple workers (processes).
                 from socket import fromshare  # type: ignore[attr-defined]
@@ -150,7 +150,7 @@ class Server:
             for sock in sockets:
                 is_windows = platform.system() == "Windows"
                 if config.workers > 1 and is_windows:  # pragma: py-not-win32
-                    sock = _share_socket(sock)  # type: ignore[assignment]
+                    sock = _share_socket(sock)
                 server = await loop.create_server(create_protocol, sock=sock, ssl=config.ssl, backlog=config.backlog)
                 self.servers.append(server)
             listeners = sockets

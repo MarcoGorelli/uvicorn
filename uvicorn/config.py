@@ -16,7 +16,7 @@ from typing import IO, Any, Literal
 
 from uvicorn._ansi import style
 from uvicorn._compat import iscoroutinefunction
-from uvicorn._types import ASGIApplication
+from uvicorn._types import ASGI3Application, ASGIApplication
 from uvicorn.importer import ImportFromStringError, import_from_string
 from uvicorn.logging import TRACE_LOG_LEVEL
 from uvicorn.middleware.asgi2 import ASGI2Middleware
@@ -445,7 +445,7 @@ class Config:
                     "with `http='zttp'`. See https://uvicorn.dev/concepts/http2/ for more information."
                 )
             http_protocol_class = import_from_string("uvicorn.protocols.http.auto_zttp_impl:AutoZttpProtocol")
-            self.http_protocol_class: type[asyncio.Protocol] = http_protocol_class
+            self.http_protocol_class: Callable[..., asyncio.Protocol] = http_protocol_class
         elif isinstance(self.http, str):
             self.http_protocol_class = import_from_string(HTTP_PROTOCOLS.get(self.http, self.http))
         else:
@@ -501,16 +501,16 @@ class Config:
 
         if isinstance(self.ws, str):
             ws_protocol_class = import_from_string(WS_PROTOCOLS.get(self.ws, self.ws))
-            self.ws_protocol_class: type[asyncio.Protocol] | None = ws_protocol_class
+            self.ws_protocol_class: Callable[..., asyncio.Protocol] | None = ws_protocol_class
         else:
             self.ws_protocol_class = self.ws
 
         self.lifespan_class = import_from_string(LIFESPAN[self.lifespan])
 
-        self.loaded_app = self.load_app()
+        app = self.load_app()
 
         try:
-            self.loaded_app = self.loaded_app()
+            app = app()
         except TypeError as exc:
             if self.factory:
                 logger.error("Error loading ASGI app factory: %s", exc)
@@ -522,23 +522,29 @@ class Config:
                 )
 
         if self.interface == "auto":
-            if inspect.isclass(self.loaded_app):
-                use_asgi_3 = hasattr(self.loaded_app, "__await__")
-            elif inspect.isfunction(self.loaded_app):
-                use_asgi_3 = iscoroutinefunction(self.loaded_app)
+            if inspect.isclass(app):
+                use_asgi_3 = hasattr(app, "__await__")
+            elif inspect.isfunction(app):
+                use_asgi_3 = iscoroutinefunction(app)
             else:
-                call = getattr(self.loaded_app, "__call__", None)
+                call = getattr(app, "__call__", None)
                 use_asgi_3 = iscoroutinefunction(call)
             self.interface = "asgi3" if use_asgi_3 else "asgi2"
 
+        self.loaded_app: ASGI3Application
         if self.interface == "wsgi":
-            self.loaded_app = WSGIMiddleware(self.loaded_app)
+            # WSGIMiddleware only accepts HTTP scopes. That holds in practice: websockets are
+            # disabled below, and a lifespan scope fails its assertion, which `lifespan="auto"` handles.
+            self.loaded_app = WSGIMiddleware(app)  # type: ignore[assignment]
             self.ws_protocol_class = None
         elif self.interface == "asgi2":
-            self.loaded_app = ASGI2Middleware(self.loaded_app)
+            self.loaded_app = ASGI2Middleware(app)
+        else:
+            self.loaded_app = app
 
         if logger.getEffectiveLevel() <= TRACE_LOG_LEVEL:
-            self.loaded_app = MessageLoggerMiddleware(self.loaded_app)
+            # MessageLoggerMiddleware handles every scope type at runtime, but is annotated for HTTP/WebSocket only.
+            self.loaded_app = MessageLoggerMiddleware(self.loaded_app)  # type: ignore[assignment]
         if self.proxy_headers:
             self.loaded_app = ProxyHeadersMiddleware(self.loaded_app, trusted_hosts=self.forwarded_allow_ips)
 

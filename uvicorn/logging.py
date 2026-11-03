@@ -96,6 +96,7 @@ class AccessFormatter(ColourizedFormatter):
 
     def formatMessage(self, record: logging.LogRecord) -> str:
         recordcopy = copy(record)
+        # pyrefly: ignore[not-iterable]
         (
             client_addr,
             method,
